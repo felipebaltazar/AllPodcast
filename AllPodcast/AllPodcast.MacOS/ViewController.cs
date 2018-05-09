@@ -3,7 +3,7 @@
 using AppKit;
 using Foundation;
 
-namespace dsgfdgsgfdgfdsfdsdsf
+namespace AllPodcast.MacOS
 {
     public partial class ViewController : NSViewController
     {
