@@ -6,8 +6,8 @@ namespace AllPodcast.ViewModels
     {
         #region Local Variables
 
-        private string title = string.Empty;
-        private bool isBusy = false;
+        private string _title = string.Empty;
+        private bool _isBusy = false;
 
         #endregion
 
@@ -15,26 +15,25 @@ namespace AllPodcast.ViewModels
         
         public bool IsBusy
         {
-            get { return isBusy; }
-            set { SetProperty(ref isBusy, value); }
+            get => _isBusy;
+            set => SetProperty(ref _isBusy, value);
         }
         
         public string Title
         {
-            get { return title; }
-            set { SetProperty(ref title, value); }
+            get => _title;
+            set => SetProperty(ref _title, value);
         }
 
-        public virtual void OnAppearing()
+        public virtual void OnViewAppearing()
         {
         }
 
-        public virtual void OnDisappearing()
+        public virtual void OnViewDisappearing()
         {
         }
         
-
-		public IDataStore<Dog> DataStore => DependencyService.Get<IDataStore<Dog>>();
+		//public IDataStore<IPodcastEpisode> DataStore => DependencyService.Get<IDataStore<IPodcastEpisode>>();
 
         #endregion
     }
