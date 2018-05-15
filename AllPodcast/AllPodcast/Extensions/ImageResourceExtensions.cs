@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 using Xamarin.Forms.Xaml;
@@ -12,6 +13,6 @@ namespace AllPodcast.Extensions
         public string Source { get; set; }
 
         public object ProvideValue(IServiceProvider serviceProvider) =>
-            string.IsNullOrEmpty(Source) ? null : ImageSource.FromResource(Source);
+            string.IsNullOrEmpty(Source) ? null : ImageSource.FromResource(Source, typeof(App).GetTypeInfo().Assembly);
     }
 }

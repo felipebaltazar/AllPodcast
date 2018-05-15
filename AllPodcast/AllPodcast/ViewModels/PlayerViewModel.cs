@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
+using System.Reflection;
+using Xamarin.Forms;
 
 namespace AllPodcast.ViewModels
 {
@@ -12,7 +11,7 @@ namespace AllPodcast.ViewModels
         private Stream _mediaStream;
         private string _mediaTitle;
         private int _progressbarWidth;
-
+        
         public Stream MediaStream
         {
             get => _mediaStream;

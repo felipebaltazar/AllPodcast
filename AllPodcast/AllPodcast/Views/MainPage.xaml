@@ -14,16 +14,24 @@
     </ContentPage.BindingContext>
 
     <ContentPage.Content>
-        <StackLayout Orientation="Vertical" BackgroundColor="Transparent"
-                     Spacing="0">
+        <Grid RowSpacing="0" ColumnSpacing="0" BackgroundColor="Transparent">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="90*" />
+                <RowDefinition Height="10*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-            <ScrollView BackgroundColor="Transparent"
+            <ScrollView BackgroundColor="Transparent" Grid.Row="0" Grid.Column="0"
                         HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+
+                <views:PodcastListView ItemSource="{Binding PodcastCollection}" 
+                                       HorizontalOptions="FillAndExpand"/>
 
             </ScrollView>
 
-            <views:Player HorizontalOptions="FillAndExpand"/>
-
-        </StackLayout>
+            <views:Player Grid.Column="0" Grid.Row="1" HorizontalOptions="FillAndExpand"/>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>

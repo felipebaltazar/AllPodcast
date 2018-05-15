@@ -1,4 +1,5 @@
 ﻿using AllPodcast.Helpers;
+using Xamarin.Forms;
 
 namespace AllPodcast.ViewModels
 {
@@ -7,12 +8,21 @@ namespace AllPodcast.ViewModels
         #region Local Variables
 
         private string _title = string.Empty;
-        private bool _isBusy = false;
+        private bool _isBusy;
 
         #endregion
 
+        public BaseViewModel()
+        {
+            MessagingCenter.Subscribe<Page>(
+                this, "OnAppearing", (sender) => OnViewAppearing());
+
+            MessagingCenter.Subscribe<Page>(
+                this, "OnAppearing", (sender) => OnViewDisappearing());
+        }
+
         #region Acessible Variables
-        
+
         public bool IsBusy
         {
             get => _isBusy;

@@ -38,7 +38,7 @@
                   <views:ImageButton Source="{extensions:ImageResource AllPodcast.Resources.Images.showMore.png}" 
                                      VerticalOptions="Center" HorizontalOptions="Center"/>
 
-                  <!--<views:ImageButton Source="{extensions:ImageResource AllPodcast.Resources.Images.previous.png}" 
+                  <views:ImageButton Source="{extensions:ImageResource AllPodcast.Resources.Images.previous.png}" 
                                      VerticalOptions="Center" HorizontalOptions="Center"/>
 
                   <views:ImageButton Source="{extensions:ImageResource AllPodcast.Resources.Images.play.png}" 
@@ -48,7 +48,7 @@
                                      VerticalOptions="Center" HorizontalOptions="Center"/>
 
                   <views:ImageButton Source="{extensions:ImageResource AllPodcast.Resources.Images.next.png}" 
-                                     VerticalOptions="Center" HorizontalOptions="Center"/>-->
+                                     VerticalOptions="Center" HorizontalOptions="Center"/>
 
               </StackLayout>
 

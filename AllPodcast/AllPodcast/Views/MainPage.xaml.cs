@@ -13,5 +13,17 @@ namespace AllPodcast
 		{
 			InitializeComponent();
 		}
+
+	    protected override void OnAppearing()
+	    {
+	        base.OnAppearing();
+            MessagingCenter.Send((Page)this, "OnAppearing");
+	    }
+
+	    protected override void OnDisappearing()
+	    {
+	        base.OnDisappearing();
+	        MessagingCenter.Send((Page)this, "OnDisappearing");
+	    }
 	}
 }
