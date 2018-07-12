@@ -5,7 +5,10 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Reflection;
+using System.Threading.Tasks;
+using System.Windows.Input;
 using Xamarin.Forms;
 using Xamarin.Forms.Internals;
 
@@ -16,10 +19,21 @@ namespace AllPodcast.Views
         #region private Variables
 
         private readonly ObservableCollection<IPodcastEpisode> _itemSource;
+        private readonly Assembly _assembly = typeof(App).GetTypeInfo().Assembly;
+        private bool _isBusy;
+        private bool _canExecute;
 
         #endregion
 
         #region Bindable Properties
+
+        public static readonly BindableProperty CommandProperty = BindableProperty.Create(
+            propertyName: nameof(Command),
+            returnType: typeof(ICommand),
+            declaringType: typeof(PodcastListView),
+            defaultValue: default(ICommand),
+            defaultBindingMode: BindingMode.TwoWay,
+            propertyChanged: CommandChanged);
 
         public static readonly BindableProperty ItemSourceProperty = BindableProperty.Create(
             propertyName: nameof(ItemSource),
@@ -41,67 +55,83 @@ namespace AllPodcast.Views
                 if(value == null)
                     return;
 
-                _itemSource.Clear();
-                value.ForEach(i=>_itemSource.Add(i));
+                value.ForEach(i=>
+                {
+                    if (!_itemSource.Any(s => s.Title.Equals(i.Title) && s.Image.Equals(i.Image)))
+                        _itemSource.Add(i);
+                });
             }
         }
+
+        public ICommand Command { get; set; }
 
         #endregion
 
         #region Constructors
 
+        public PodcastListView(ObservableCollection<IPodcastEpisode> itemSource)
+        {
+            _itemSource = itemSource ?? new ObservableCollection<IPodcastEpisode>();
+            _itemSource.CollectionChanged += _itemSource_CollectionChanged;
+            _canExecute = true;
+            RefreshLayout();
+        }
+
         public PodcastListView()
         {
             _itemSource = new ObservableCollection<IPodcastEpisode>();
             _itemSource.CollectionChanged += _itemSource_CollectionChanged;
-        }
-
-        public PodcastListView(ObservableCollection<IPodcastEpisode> itemSource)
-        {
-            _itemSource = itemSource;
-            _itemSource.CollectionChanged += _itemSource_CollectionChanged;
+            _canExecute = true;
+            RefreshLayout();
         }
 
         #endregion
 
         #region Private Methods
-
+        
         private void _itemSource_CollectionChanged(
             object sender, NotifyCollectionChangedEventArgs e)
         {
-            var currentAdded = _itemSource.Count;
-            var itensCount = ItemSource.ToList().Count;
-
-            if (currentAdded != itensCount)
+            if(e.NewItems == null)
                 return;
 
-            RefreshLayout();
+            var newItems = e.NewItems.Cast<IPodcastEpisode>();
+            var currentRow = RowDefinitions.Count - 1;
+            var currentcolumn = 1;
+            var lastChild = Children.LastOrDefault();
+
+            if (lastChild != null)
+            {
+                var column = GetColumn(lastChild);
+
+                if (column > 0)
+                {
+                    currentRow = currentRow + 1 ;
+                    currentcolumn =  0;
+                }
+            }
+            else
+            {
+                currentRow = 0;
+                currentcolumn = 0;
+            }
+
+             newItems.ForEach(
+                i => IncludeItem(i, ref currentRow, ref currentcolumn));
         }
           
-
         private void RefreshLayout()
         {
-            var totalItems = _itemSource.Count;
-
             Padding = 1;
             ColumnDefinitions.Clear();
             RowDefinitions.Clear();
 
             ColumnDefinitions.Add(
-                new ColumnDefinition(){ Width = new GridLength(1,    GridUnitType.Star) });
+                new ColumnDefinition(){ Width = new GridLength(1, GridUnitType.Star) });
 
             ColumnDefinitions.Add(
-                new ColumnDefinition(){ Width = new GridLength(1,    GridUnitType.Star) });
-
-            var totalRows = Convert.ToInt32(
-                Math.Floor((totalItems / 2f)), CultureInfo.InvariantCulture);
-
-            for (var i = 0; i < totalRows; i++)
-            {
-                RowDefinitions.Add(
-                    new RowDefinition() {Height = new GridLength(1, GridUnitType.Star)});
-            }
-
+                new ColumnDefinition(){ Width = new GridLength(1, GridUnitType.Star) });
+            
             var row = 0;
             var column = 0;
 
@@ -112,6 +142,11 @@ namespace AllPodcast.Views
         private void IncludeItem(IPodcastEpisode i, ref int row, ref int column)
         {
             var viewCell = CreateViewCellFromTemplate(i);
+
+            if(RowDefinitions.Count - 1 < row)
+                RowDefinitions.Add(
+                    new RowDefinition() {Height = new GridLength(1, GridUnitType.Star)});
+
             Children.Add(viewCell, column, row);
 
             switch (column)
@@ -142,11 +177,37 @@ namespace AllPodcast.Views
                     new ColumnDefinition() {Width = new GridLength(1, GridUnitType.Star)}
                 }
             };
+
+            var tapgesture = new TapGestureRecognizer
+            {
+                Command = new Command(() =>
+                {
+                    if (!_canExecute)
+                        return;
+
+                    _canExecute = false;
+                    
+                    DoAnimation(view);
+                    Command?.Execute(itemEpisode);
+
+                    _canExecute = true;
+                })
+            };
             
+            var backgroundLoader = new ActivityIndicator()
+            {
+                IsVisible = true,
+                IsRunning = true,
+                IsEnabled = true,
+                HorizontalOptions = LayoutOptions.CenterAndExpand,
+                VerticalOptions = LayoutOptions.CenterAndExpand,
+                BackgroundColor = Color.DimGray
+            };
+
             var coverBackground = new Image()
             {
                 Source = ImageSource.FromUri(new Uri(itemEpisode.Image)),
-                BackgroundColor = Color.DimGray,
+                BackgroundColor = Color.Transparent,
                 Aspect = Aspect.AspectFill
             };
 
@@ -189,16 +250,20 @@ namespace AllPodcast.Views
             var titleMask = new Image
             {
                 Aspect = Aspect.Fill,
-                Source = ImageSource.FromResource("AllPodcast.Resources.Images.mask.png",
-                    typeof(App).GetTypeInfo().Assembly)
+                Source = ImageSource.FromResource(
+                    "AllPodcast.Resources.Images.mask.png",
+                    _assembly)
             };
 
             titleGrid.Children.Add(titleMask, 0, 1);
             titleGrid.Children.Add(titleLabel, 0, 1);
 
+            view.Children.Add(backgroundLoader);
             view.Children.Add(imageMask);
             view.Children.Add(coverBackground);
             view.Children.Add(titleGrid);
+            
+            view.GestureRecognizers.Add(tapgesture);
 
             return view;
         }
@@ -210,6 +275,14 @@ namespace AllPodcast.Views
 
             control.ItemSource = newList;
         }
+        
+        private static void CommandChanged(BindableObject bindable, object oldvalue, object newvalue)
+        {
+            var newCommand = (ICommand) newvalue;
+            var control = (PodcastListView)bindable;
+
+            control.Command = newCommand;
+        }
 
         protected override void OnSizeAllocated(double width, double height)
         {
@@ -220,6 +293,24 @@ namespace AllPodcast.Views
 
             if (colsCount > 0 & rowsCount > 0)
                 HeightRequest = (width / colsCount) * rowsCount;
+        }
+
+        private async void DoAnimation(VisualElement view)
+        {
+            if(_isBusy)
+                return;
+
+            await Animate(view);
+        }
+
+        private async Task Animate(VisualElement view)
+        {
+            _isBusy = true;
+
+            await view.ScaleTo(1 - 0.5, 200, Easing.SpringOut);
+            await view.ScaleTo(1, 200, Easing.SpringOut);    
+            
+            _isBusy = false;
         }
 
         #endregion

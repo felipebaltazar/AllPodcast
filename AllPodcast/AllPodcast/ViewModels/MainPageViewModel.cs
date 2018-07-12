@@ -10,15 +10,15 @@ namespace AllPodcast.ViewModels
 {
     public class MainPageViewModel : BaseViewModel
     {
-        private List<IPodcastEpisode> podcastCollection;
+        private List<IPodcastEpisode> _podcastCollection;
         private readonly Manager _podcastManager;
         
         public List<PodcastType> SignedPodcasts { get; set; }
 
         public List<IPodcastEpisode> PodcastCollection
         {
-            get => podcastCollection;
-            set => SetProperty(ref podcastCollection, value);
+            get => _podcastCollection;
+            set => SetProperty(ref _podcastCollection, value);
         }
         
         public MainPageViewModel()
@@ -43,15 +43,14 @@ namespace AllPodcast.ViewModels
         {
             IsBusy = true;
 
-            var collection = await SignedPodcasts
-                .Select(type=> _podcastManager.GetManager(type))
-                .Where(m=> m != null)
-                .SelectManyAsync(m=> m.GetPodcastListAsync());
+            var managers = SignedPodcasts
+                .Select(type => _podcastManager.GetManager(type))
+                .Where(m => m != null);
+            
+            var collection = await managers.SelectManyAsync(m=> m.GetPodcastListAsync());
+            var episodeCollection = collection.OrderBy(p=> p.Title).Take(20).ToList();
 
-            PodcastCollection = collection
-                .OrderBy(p=> p.Title)
-                .Take(20)
-                .ToList();
+            PodcastCollection = episodeCollection;
 
             IsBusy = false;
         }
